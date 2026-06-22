@@ -136,7 +136,8 @@ if df is not None and not df.empty:
             with st.expander(f"📌 วิธี: {m_curr} (รวม {r['count']:,} งาน | ฿{r['budget']:,.2f})"):
                 sub_df = df[df['purchase_method_name_clean'] == m_curr].sort_values(by='budget_num', ascending=False).head(3)
                 for i, (_, p) in enumerate(sub_df.iterrows(), 1):
-                    st.markdown(f"**{i}. {p['project_name']}**\n└ 💰 `฿{p['budget_num']:,.2f}` | 🔗 [e-GP](https://process3.gprocurement.go.th/egp2procmainWeb/jsp/procsearch.sch?projectId={p['project_id']})")
+                    st.markdown(f"**{i}. {p['project_name']}**\n└ 💰 `฿{p['budget_num']:,.2f}` | 🔗 [e-GP](https://process.gprocurement.go.th/egp2procmainWeb/jsp/public_announ_search.jsp?projectId=67129280905
+{p['project_id']&homeflag=QR})")
 
     with tab_sub:
         st.markdown("### 🏢 สัดส่วนงบประมาณจำแนกตามกรม / หน่วยงานย่อย")
