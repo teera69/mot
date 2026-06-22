@@ -155,7 +155,7 @@ if df is not None and not df.empty:
             st.pyplot(fig_s)
 
     with tab_map:
-        st.markdown("### 📍 แผนที่การวบประมาณแต่ละจัวหวัด (GIS Geo-Matrix)")
+        st.markdown("### 📍 แผนที่แต่ละจังหวัด ที่งบประมาณลงไป (GIS Geo-Matrix)")
         p_grp = df.groupby('prov_clean').agg(count=('project_id','count'), budget=('budget_num','sum')).reset_index()
         
         map_data = []
