@@ -1,8 +1,7 @@
 import os
 import certifi
 import urllib.request
-
-# 💉 1. ฉีดวัคซีน SSL
+# 💉 ฉีดวัคซีน SSL ป้องกันคลาวด์บล็อกท่อเน็ต
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 import streamlit as st
@@ -12,11 +11,11 @@ import matplotlib.font_manager as fm
 import streamlit.components.v1 as components
 import json
 
-# 2. ตั้งค่าหน้าเว็บ
-st.set_page_config(page_title="e-GP Transport Titan Cloud", page_icon="🏛️", layout="wide")
+# 1. ตั้งค่าหน้าเว็บ
+st.set_page_config(page_title="e-GP Transport Intelligence Portal", page_icon="🏛️", layout="wide")
 
 # ==========================================
-# 🎨 3. ระบบ Auto-Download ฟอนต์ Kanit แก้บั๊กกล่องสี่เหลี่ยม [][][]
+# 🎨 2. ระบบ Auto-Download ฟอนต์ Kanit แก้บั๊กกล่องสี่เหลี่ยม
 # ==========================================
 font_path = "Kanit-Regular.ttf"
 font_url = "https://github.com/google/fonts/raw/main/ofl/kanit/Kanit-Regular.ttf"
@@ -32,7 +31,7 @@ try:
 except: pass
 
 # ==========================================
-# 📡 4. ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
+# 📡 3. ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
 # ==========================================
 SPREADSHEET_ID = "17-CEmK249ONlcj2-ejwdhf9L365emL1LdXBa3Aluvqo"
 
@@ -41,6 +40,7 @@ def load_data_from_google_sheets():
     csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv"
     try:
         df = pd.read_csv(csv_url)
+        # 🛡️ PANDAS SCHEMA VACCINE
         for col in ['project_id', 'project_name', 'purchase_method_name', 'sum_price_agree', 'budget', 'dept_sub_name', 'prov_name', 'province']:
             if col not in df.columns: df[col] = None
             
@@ -56,7 +56,7 @@ def load_data_from_google_sheets():
         st.error(f"❌ **ดึงข้อมูลจาก Google Sheets ไม่สำเร็จ:** \n`{e}`")
         return None
 
-# 🗺️ 5. ฐานข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
+# 🗺️ ฐานข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
 PROV_GEO_MATRIX = {
     "กรุงเทพมหานคร": {"reg": "ภาคกลาง", "lat": 13.7563, "lng": 100.5018}, "สมุทรปราการ": {"reg": "ภาคกลาง", "lat": 13.5993, "lng": 100.5968},
     "นนทบุรี": {"reg": "ภาคกลาง", "lat": 13.8591, "lng": 100.5217}, "ปทุมธานี": {"reg": "ภาคกลาง", "lat": 14.0208, "lng": 100.5250},
@@ -100,19 +100,19 @@ PROV_GEO_MATRIX = {
     "ยะลา": {"reg": "ภาคใต้", "lat": 6.5411, "lng": 101.2804}, "นราธิวาส": {"reg": "ภาคใต้", "lat": 6.4255, "lng": 101.8253},
 }
 
-st.title("🏛️ e-GP Transport Intelligence Portal (G-Sheets Data Lake 🚀)")
-st.markdown("🌐 *ระบบฐานข้อมูลคลาวด์สตรีมมิ่งสดจาก Google Sheets ทลายข้อจำกัดไฟล์ 59MB สำเร็จ 100%*")
+st.title("🏛️ e-GP Transport Intelligence Portal")
+st.markdown("🌐 *ระบบฐานข้อมูลคลาวด์สตรีมมิ่งสดจาก Google Sheets*")
 st.markdown("---")
 
-with st.spinner("📥 กำลังสูบ Big Data 51,108 โครงการจาก Google Sheets ลง RAM... (ประมาณ 5-8 วินาที)"):
+with st.spinner("📥 กำลังสูบ Big Data ลง RAM..."):
     df = load_data_from_google_sheets()
 
 if df is not None and not df.empty:
-    st.subheader("📊 สรุปขุมทรัพย์เชิงลึก: กระทรวงคมนาคม (พ.ศ. 2569)")
+    st.subheader("📊 สรุปขุมทรัพย์: กระทรวงคมนาคม")
     kpi1, kpi2, kpi3 = st.columns(3)
-    kpi1.metric("จำนวนโครงการสะสม", f"{len(df):,} สัญญา", delta="Google Drive API")
-    kpi2.metric("เม็ดเงินจัดซื้อจัดจ้างรวม", f"฿ {df['budget_num'].sum():,.2f} บาท", delta="GFMIS Verified")
-    kpi3.metric("สถานะ Data Lake", "Connected", delta="Live Sync")
+    kpi1.metric("โครงการสะสม", f"{len(df):,} สัญญา")
+    kpi2.metric("เม็ดเงินรวม", f"฿ {df['budget_num'].sum():,.2f} บาท")
+    kpi3.metric("สถานะ", "Connected")
     st.markdown("---")
 
     tab_method, tab_sub, tab_map, tab_data = st.tabs(["🚧 1. มิติวิธีจัดหา", "🏢 2. มิติหน่วยงานย่อย", "🗺️ 3. แผนที่ Leaflet GIS", "📑 4. ฐานข้อมูลดิบ & CSV"])
@@ -130,17 +130,20 @@ if df is not None and not df.empty:
             ax.set_xlabel("ล้านบาท")
             st.pyplot(fig)
 
-        st.markdown("#### 🏆 TOP 3 โครงการมูลค่าสูงสุดของแต่ละวิธีจัดหา")
+        st.markdown("#### 🏆 TOP 3 โครงการมูลค่าสูงสุด")
         for _, r in m_grp.head(5).iterrows():
             m_curr = r['purchase_method_name_clean']
-            with st.expander(f"📌 วิธี: {m_curr} (รวม {r['count']:,} งาน | ฿{r['budget']:,.2f})"):
+            with st.expander(f"📌 วิธี: {m_curr}"):
                 sub_df = df[df['purchase_method_name_clean'] == m_curr].sort_values(by='budget_num', ascending=False).head(3)
                 for i, (_, p) in enumerate(sub_df.iterrows(), 1):
-                    st.markdown(f"**{i}. {p['project_name']}**\n└ 💰 `฿{p['budget_num']:,.2f}` | 🔗 [e-GP](https://process.gprocurement.go.th/egp2procmainWeb/jsp/public_announ_search.jsp?projectId=67129280905
-{p['project_id']&homeflag=QR})")
+                    egp_url = f"https://process.gprocurement.go.th/egp2procmainWeb/jsp/public_announ_search.jsp?projectId={p['project_id']}&homeflag=QR"
+                    actai_url = f"https://procurement.actai.co/result?search={p['project_id']}"
+                    st.markdown(f"**{i}. {p['project_name']}**")
+                    st.markdown(f"💰 งบ: `{p['budget_num']:,.2f}` บาท")
+                    st.markdown(f"🔗 [ดูประกาศ e-GP]({egp_url}) | 🛡️ [ตรวจสอบ ACT AI]({actai_url})")
 
     with tab_sub:
-        st.markdown("### 🏢 สัดส่วนงบประมาณจำแนกตามกรม / หน่วยงานย่อย")
+        st.markdown("### 🏢 สัดส่วนงบประมาณจำแนกตามกรม")
         sub_grp = df.groupby('sub_clean').agg(count=('project_id','count'), budget=('budget_num','sum')).reset_index().sort_values(by='budget', ascending=False)
         
         s_col1, s_col2 = st.columns([1, 1])
@@ -168,31 +171,24 @@ if df is not None and not df.empty:
         map_html = f"""
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-        <div id="map" style="width: 100%; height: 520px; border-radius:10px; border:2px solid #34495e;"></div>
+        <div id="map" style="width: 100%; height: 500px; border-radius:10px;"></div>
         <script>
             var map = L.map('map').setView([13.5, 100.5], 6);
             L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png').addTo(map);
             var dataList = {json.dumps(map_data, ensure_ascii=False)};
             var maxB = Math.max(...dataList.map(o => o.budget));
-            
             dataList.forEach(d => {{
-                var r = 8 + ((d.budget/maxB)*28);
-                var mColor = '#3498db';
-                if (d.reg === 'ภาคอีสาน') mColor = '#e67e22';
-                else if (d.reg === 'ภาคใต้') mColor = '#f1c40f';
-                else if (d.reg === 'ภาคเหนือ') mColor = '#9b59b6';
-                else if (d.reg === 'ภาคตะวันออก') mColor = '#1abc9c';
-                else if (d.reg === 'ภาคตะวันตก') mColor = '#e74c3c';
-
-                var marker = L.circleMarker([d.lat, d.lng], {{radius: r, fillColor: mColor, color: '#fff', weight: 1.5, fillOpacity: 0.85}}).addTo(map);
+                var r = 8 + ((d.budget/maxB)*25);
+                var mColor = '#e74c3c';
+                var marker = L.circleMarker([d.lat, d.lng], {{radius: r, fillColor: mColor, color: '#fff', weight: 1, fillOpacity: 0.8}}).addTo(map);
                 var b_mb = (d.budget/1e6).toLocaleString(undefined, {{minimumFractionDigits:2, maximumFractionDigits:2}});
-                marker.bindPopup(`<b>📍 จ.${{d.prov}} (${{d.reg}})</b><br>📦 สัญญา: ${{d.count.toLocaleString()}} งาน<br>💰 งบรวม: <b>฿${{b_mb}}</b> ล้านบาท`);
+                marker.bindPopup(`<b>จ.${{d.prov}}</b><br>งบ: ${{b_mb}} ล้านบาท`);
             }});
         </script>
         """
-        components.html(map_html, height=540)
+        components.html(map_html, height=520)
 
     with tab_data:
-        st.markdown("### 📑 ตารางฐานข้อมูลดิบ (Interactive Data Grid)")
+        st.markdown("### 📑 ตารางฐานข้อมูลดิบ")
         st.dataframe(df[['project_id','project_name','purchase_method_name','sum_price_agree','sub_clean','prov_clean']], use_container_width=True, height=350)
-        st.download_button("📥 ดาวน์โหลดฐานข้อมูลชุดนี้ (.CSV)", data=df.to_csv(index=False).encode('utf-8-sig'), file_name="Transport_2569_from_GSheets.csv", mime="text/csv")
+        st.download_button("📥 ดาวน์โหลด .CSV", data=df.to_csv(index=False).encode('utf-8-sig'), file_name="Data_Export.csv", mime="text/csv")
