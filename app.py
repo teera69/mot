@@ -108,7 +108,7 @@ with st.spinner("📥 กำลังสูบ Big Data ลง RAM..."):
     df = load_data_from_google_sheets()
 
 if df is not None and not df.empty:
-    st.subheader("📊 สรุปขุมทรัพย์: กระทรวงคมนาคม")
+    st.subheader("📊 สรุปขุมทรัพย์: กระทรวงคมนาคม ช่วงปีงบประมาณ 2569 ดำเนินการไปแล้ว")
     kpi1, kpi2, kpi3 = st.columns(3)
     kpi1.metric("โครงการสะสม", f"{len(df):,} สัญญา")
     kpi2.metric("เม็ดเงินรวม", f"฿ {df['budget_num'].sum():,.2f} บาท")
