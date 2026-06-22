@@ -1,23 +1,27 @@
 import os
-import certifi
-# 💉 ฉีดวัคซีน SSL ป้องกันคลาวด์บล็อกท่อเน็ต
-os.environ['SSL_CERT_FILE'] = certifi.where()
-
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-import streamlit.components.v1 as components
-import json
-
-# 1. ตั้งค่าหน้าเว็บ
-st.set_page_config(page_title="e-GP Transport Titan Cloud", page_icon="🏛️", layout="wide")
-
-# ตั้งค่าฟอนต์ไทยให้ระบบกราฟ
+import urllib.request
 import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 🎨 ระบบ Auto-Download ฟอนต์ภาษาไทยแก้บั๊ก "เต้าหู้" [][][]
+# ==========================================
+font_path = "Kanit-Regular.ttf"
+font_url = "https://github.com/google/fonts/raw/main/ofl/kanit/Kanit-Regular.ttf"
+
+# ถ้าเซิร์ฟเวอร์สิงคโปร์ยังไม่มีไฟล์ฟอนต์นี้ -> สั่งให้มันวิ่งไปโหลดจาก Google มาเก็บไว้เอง!
+if not os.path.exists(font_path):
+  try:
+    urllib.request.urlretrieve(font_url, font_path)
+  except Exception as e:
+    print(f"Font download error: {e}")
+
+# ประทับตราฟอนต์ลงระบบ Matplotlib
 try:
-    fm.fontManager.addfont('Kanit-Regular.ttf')
-    plt.rcParams['font.family'] = fm.FontProperties(fname='Kanit-Regular.ttf').get_name()
-except: pass
+  fm.fontManager.addfont(font_path)
+  plt.rcParams["font.family"] = fm.FontProperties(fname=font_path).get_name()
+except:
+  pass
 
 # ==========================================
 # 📡 ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
