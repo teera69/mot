@@ -1,40 +1,46 @@
 import os
+import certifi
 import urllib.request
-import matplotlib.font_manager as fm
+
+# 💉 1. ฉีดวัคซีน SSL
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
+import streamlit as st
+import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import streamlit.components.v1 as components
+import json
+
+# 2. ตั้งค่าหน้าเว็บ
+st.set_page_config(page_title="e-GP Transport Titan Cloud", page_icon="🏛️", layout="wide")
 
 # ==========================================
-# 🎨 ระบบ Auto-Download ฟอนต์ภาษาไทยแก้บั๊ก "เต้าหู้" [][][]
+# 🎨 3. ระบบ Auto-Download ฟอนต์ Kanit แก้บั๊กกล่องสี่เหลี่ยม [][][]
 # ==========================================
 font_path = "Kanit-Regular.ttf"
 font_url = "https://github.com/google/fonts/raw/main/ofl/kanit/Kanit-Regular.ttf"
 
-# ถ้าเซิร์ฟเวอร์สิงคโปร์ยังไม่มีไฟล์ฟอนต์นี้ -> สั่งให้มันวิ่งไปโหลดจาก Google มาเก็บไว้เอง!
 if not os.path.exists(font_path):
-  try:
-    urllib.request.urlretrieve(font_url, font_path)
-  except Exception as e:
-    print(f"Font download error: {e}")
+    try:
+        urllib.request.urlretrieve(font_url, font_path)
+    except: pass
 
-# ประทับตราฟอนต์ลงระบบ Matplotlib
 try:
-  fm.fontManager.addfont(font_path)
-  plt.rcParams["font.family"] = fm.FontProperties(fname=font_path).get_name()
-except:
-  pass
+    fm.fontManager.addfont(font_path)
+    plt.rcParams['font.family'] = fm.FontProperties(fname=font_path).get_name()
+except: pass
 
 # ==========================================
-# 📡 ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
+# 📡 4. ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
 # ==========================================
 SPREADSHEET_ID = "17-CEmK249ONlcj2-ejwdhf9L365emL1LdXBa3Aluvqo"
 
-@st.cache_data(ttl=600) # 💡 จำไว้ในแรม 10 นาที 
+@st.cache_data(ttl=600)
 def load_data_from_google_sheets():
     csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv"
     try:
         df = pd.read_csv(csv_url)
-        
-        # 🛡️ PANDAS SCHEMA VACCINE (อุดรอยรั่วคอลัมน์หาย)
         for col in ['project_id', 'project_name', 'purchase_method_name', 'sum_price_agree', 'budget', 'dept_sub_name', 'prov_name', 'province']:
             if col not in df.columns: df[col] = None
             
@@ -47,10 +53,10 @@ def load_data_from_google_sheets():
         df['sub_clean'] = df['dept_sub_name'].fillna('ส่วนกลาง / ไม่ระบุ').replace(['None','','-'], 'ส่วนกลาง / ไม่ระบุ')
         return df
     except Exception as e:
-        st.error(f"❌ **ดึงข้อมูลจาก Google Sheets ไม่สำเร็จ:** \n`{e}`\n\n*(โปรดตรวจสอบว่าตั้งค่า Google Sheets เป็น 'ทุกคนที่มีลิงก์มีสิทธิ์ดู' หรือยังครับ)*")
+        st.error(f"❌ **ดึงข้อมูลจาก Google Sheets ไม่สำเร็จ:** \n`{e}`")
         return None
 
-# 🗺️ ฐานข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
+# 🗺️ 5. ฐานข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
 PROV_GEO_MATRIX = {
     "กรุงเทพมหานคร": {"reg": "ภาคกลาง", "lat": 13.7563, "lng": 100.5018}, "สมุทรปราการ": {"reg": "ภาคกลาง", "lat": 13.5993, "lng": 100.5968},
     "นนทบุรี": {"reg": "ภาคกลาง", "lat": 13.8591, "lng": 100.5217}, "ปทุมธานี": {"reg": "ภาคกลาง", "lat": 14.0208, "lng": 100.5250},
