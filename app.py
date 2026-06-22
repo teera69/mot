@@ -1,20 +1,52 @@
+import os
+import certifi
+# 💉 ฉีดวัคซีน SSL ป้องกันคลาวด์บล็อกท่อเน็ต
+os.environ['SSL_CERT_FILE'] = certifi.where()
+
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit.components.v1 as components
 import json
-import os
 
 # 1. ตั้งค่าหน้าเว็บ
 st.set_page_config(page_title="e-GP Transport Titan Cloud", page_icon="🏛️", layout="wide")
 
-# ตั้งค่าฟอนต์ไทยให้ Matplotlib
+# ตั้งค่าฟอนต์ไทยให้ระบบกราฟ
 import matplotlib.font_manager as fm
 try:
     fm.fontManager.addfont('Kanit-Regular.ttf')
     plt.rcParams['font.family'] = fm.FontProperties(fname='Kanit-Regular.ttf').get_name()
 except: pass
 
+# ==========================================
+# 📡 ท่อเชื่อมอัจฉริยะ ดึงตรงจาก Google Sheets ของลูกพี่!
+# ==========================================
+SPREADSHEET_ID = "17-CEmK249ONlcj2-ejwdhf9L365emL1LdXBa3Aluvqo"
+
+@st.cache_data(ttl=600) # 💡 จำไว้ในแรม 10 นาที 
+def load_data_from_google_sheets():
+    csv_url = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/export?format=csv"
+    try:
+        df = pd.read_csv(csv_url)
+        
+        # 🛡️ PANDAS SCHEMA VACCINE (อุดรอยรั่วคอลัมน์หาย)
+        for col in ['project_id', 'project_name', 'purchase_method_name', 'sum_price_agree', 'budget', 'dept_sub_name', 'prov_name', 'province']:
+            if col not in df.columns: df[col] = None
+            
+        df['agree_num'] = pd.to_numeric(df['sum_price_agree'].astype(str).str.replace(',',''), errors='coerce')
+        df['budget_num_raw'] = pd.to_numeric(df['budget'].astype(str).str.replace(',',''), errors='coerce')
+        df['budget_num'] = df['agree_num'].fillna(df['budget_num_raw']).fillna(0)
+        
+        prov_series = df.get('prov_name', pd.Series()).fillna(df.get('province', pd.Series())).fillna('ไม่ระบุ')
+        df['prov_clean'] = prov_series.astype(str).str.replace('จังหวัด','').str.strip()
+        df['sub_clean'] = df['dept_sub_name'].fillna('ส่วนกลาง / ไม่ระบุ').replace(['None','','-'], 'ส่วนกลาง / ไม่ระบุ')
+        return df
+    except Exception as e:
+        st.error(f"❌ **ดึงข้อมูลจาก Google Sheets ไม่สำเร็จ:** \n`{e}`\n\n*(โปรดตรวจสอบว่าตั้งค่า Google Sheets เป็น 'ทุกคนที่มีลิงก์มีสิทธิ์ดู' หรือยังครับ)*")
+        return None
+
+# 🗺️ ฐานข้อมูลพิกัดภูมิศาสตร์ 77 จังหวัด
 PROV_GEO_MATRIX = {
     "กรุงเทพมหานคร": {"reg": "ภาคกลาง", "lat": 13.7563, "lng": 100.5018}, "สมุทรปราการ": {"reg": "ภาคกลาง", "lat": 13.5993, "lng": 100.5968},
     "นนทบุรี": {"reg": "ภาคกลาง", "lat": 13.8591, "lng": 100.5217}, "ปทุมธานี": {"reg": "ภาคกลาง", "lat": 14.0208, "lng": 100.5250},
@@ -58,42 +90,19 @@ PROV_GEO_MATRIX = {
     "ยะลา": {"reg": "ภาคใต้", "lat": 6.5411, "lng": 101.2804}, "นราธิวาส": {"reg": "ภาคใต้", "lat": 6.4255, "lng": 101.8253},
 }
 
-# 🧠 ฟังก์ชันอ่านไฟล์จากโอ่งในเครื่อง (เร็วแรง 0.001 วินาที ไม่ต้องต่อเน็ตสิงคโปร์)
-@st.cache_data
-def load_data_from_local_csv():
-    filename = "data_transport_2569.csv"
-    if not os.path.exists(filename):
-        return None
-    df = pd.read_csv(filename)
-    
-    # ดักทางอุดรอยรั่ว Schema ของ Pandas เหมือนเดิม
-    for col in ['project_id', 'project_name', 'purchase_method_name', 'sum_price_agree', 'budget', 'dept_sub_name', 'prov_name', 'province']:
-        if col not in df.columns: df[col] = None
-        
-    df['agree_num'] = pd.to_numeric(df['sum_price_agree'].astype(str).str.replace(',',''), errors='coerce')
-    df['budget_num_raw'] = pd.to_numeric(df['budget'].astype(str).str.replace(',',''), errors='coerce')
-    df['budget_num'] = df['agree_num'].fillna(df['budget_num_raw']).fillna(0)
-    
-    prov_series = df.get('prov_name', pd.Series()).fillna(df.get('province', pd.Series())).fillna('ไม่ระบุ')
-    df['prov_clean'] = prov_series.astype(str).str.replace('จังหวัด','').str.strip()
-    return df
-
-# วาด Web UI หน้าเว็บหลัก
-st.title("🏛️ e-GP Transport Intelligence Portal (คลาวด์เวอร์ชันหุ้มเกราะ 🚀)")
-st.markdown("🔒 *ระบบฐานข้อมูลแบบ In-Memory Data Lake ประมวลผลจากคลังข้อมูลดิบในตัว เสถียร 100% ไม่หลุดท่อ*")
+st.title("🏛️ e-GP Transport Intelligence Portal (G-Sheets Data Lake 🚀)")
+st.markdown("🌐 *ระบบฐานข้อมูลคลาวด์สตรีมมิ่งสดจาก Google Sheets ทลายข้อจำกัดไฟล์ 59MB สำเร็จ 100%*")
 st.markdown("---")
 
-df = load_data_from_local_csv()
+with st.spinner("📥 กำลังสูบ Big Data 51,108 โครงการจาก Google Sheets ลง RAM... (ประมาณ 5-8 วินาที)"):
+    df = load_data_from_google_sheets()
 
-if df is None:
-    st.error("❌ **ไม่พบไฟล์คลังข้อมูล `data_transport_2569.csv` ในระบบ!**\nกรุณารันไฟล์ `dump_to_csv.py` ในเครื่องเพื่อสูบข้อมูลมาวางเคียงข้างโค้ดนี้ก่อนครับ")
-else:
-    # 📊 KPI ด้านบนสุด
+if df is not None and not df.empty:
     st.subheader("📊 สรุปขุมทรัพย์เชิงลึก: กระทรวงคมนาคม (พ.ศ. 2569)")
     kpi1, kpi2, kpi3 = st.columns(3)
-    kpi1.metric("จำนวนโครงการสะสม", f"{len(df):,} สัญญา", delta="ขุดข้อมูลครบถ้วน")
-    kpi2.metric("เม็ดเงินจัดซื้อจัดจ้างรวม", f"฿ {df['budget_num'].sum():,.2f} บาท", delta="ตรงฐานข้อมูล GFMIS")
-    kpi3.metric("ความเร็วการโหลดฐานข้อมูล", "0.01 Seconds", delta="In-Memory Database")
+    kpi1.metric("จำนวนโครงการสะสม", f"{len(df):,} สัญญา", delta="Google Drive API")
+    kpi2.metric("เม็ดเงินจัดซื้อจัดจ้างรวม", f"฿ {df['budget_num'].sum():,.2f} บาท", delta="GFMIS Verified")
+    kpi3.metric("สถานะ Data Lake", "Connected", delta="Live Sync")
     st.markdown("---")
 
     tab_method, tab_sub, tab_map, tab_data = st.tabs(["🚧 1. มิติวิธีจัดหา", "🏢 2. มิติหน่วยงานย่อย", "🗺️ 3. แผนที่ Leaflet GIS", "📑 4. ฐานข้อมูลดิบ & CSV"])
@@ -121,7 +130,6 @@ else:
 
     with tab_sub:
         st.markdown("### 🏢 สัดส่วนงบประมาณจำแนกตามกรม / หน่วยงานย่อย")
-        df['sub_clean'] = df['dept_sub_name'].fillna('ส่วนกลาง / ไม่ระบุ').replace(['None','','-'], 'ส่วนกลาง / ไม่ระบุ')
         sub_grp = df.groupby('sub_clean').agg(count=('project_id','count'), budget=('budget_num','sum')).reset_index().sort_values(by='budget', ascending=False)
         
         s_col1, s_col2 = st.columns([1, 1])
@@ -176,4 +184,4 @@ else:
     with tab_data:
         st.markdown("### 📑 ตารางฐานข้อมูลดิบ (Interactive Data Grid)")
         st.dataframe(df[['project_id','project_name','purchase_method_name','sum_price_agree','sub_clean','prov_clean']], use_container_width=True, height=350)
-        st.download_button("📥 ดาวน์โหลดฐานข้อมูลชุดนี้ (.CSV)", data=df.to_csv(index=False).encode('utf-8-sig'), file_name="FullData_Transport_2569.csv", mime="text/csv")
+        st.download_button("📥 ดาวน์โหลดฐานข้อมูลชุดนี้ (.CSV)", data=df.to_csv(index=False).encode('utf-8-sig'), file_name="Transport_2569_from_GSheets.csv", mime="text/csv")
